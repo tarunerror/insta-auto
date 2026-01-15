@@ -22,9 +22,35 @@ cd D:\insta-auto
 pip install -r requirements.txt
 ```
 
-### 2. Configure Your Account and Reels
+### 2. Configure Your Credentials (Choose One Method)
 
-Open `config.json` and edit:
+**Option A: Environment Variables (Recommended - More Secure)**
+
+Copy `.env.example` to `.env` and edit:
+```bash
+cp .env.example .env
+```
+
+Then edit `.env`:
+```
+INSTAGRAM_USERNAME=your_instagram_username
+INSTAGRAM_PASSWORD=your_instagram_password
+```
+
+**Option B: Config File (Less Secure)**
+
+Add credentials directly to `config.json`:
+```json
+{
+  "username": "your_instagram_username",
+  "password": "your_instagram_password",
+  ...
+}
+```
+
+### 3. Configure Your Reels
+
+Edit `config.json` with your reels:
 
 ```json
 {
@@ -73,7 +99,7 @@ Open `config.json` and edit:
 | `["send", "want", "me"]` | "send me", "I want it" | "great content" |
 | `[]` (empty) | All comments | Nothing |
 
-### 3. Run the Bot
+### 4. Run the Bot
 
 **Run once:**
 ```bash
@@ -121,13 +147,25 @@ In continuous mode, the bot will:
 ```
 insta-auto/
 ├── bot.py           # Main automation script
-├── config.json      # Your settings and reel configurations
+├── config.json      # Your reels and settings (create from config.example.json)
+├── .env             # Your credentials (create from .env.example)
+├── .env.example     # Template for credentials
+├── config.example.json # Template for config
 ├── database.py      # Tracks processed users (prevents duplicate DMs)
 ├── requirements.txt # Python dependencies
 ├── session.json     # Auto-created: Saves login session
 ├── processed.db     # Auto-created: Database of processed users
 └── README.md        # This file
 ```
+
+## Security
+
+| Feature | Description |
+|---------|-------------|
+| Environment variables | Credentials stored in `.env` file, not in code |
+| .gitignore protection | Sensitive files excluded from git |
+| Session file permissions | Restricted to owner-only on Unix systems |
+| Input validation | Config validated on startup |
 
 ## Safety Features
 

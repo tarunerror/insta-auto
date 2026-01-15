@@ -1,14 +1,19 @@
 import json
+import os
 import random
 import re
 import sys
 import time
 from pathlib import Path
 
+from dotenv import load_dotenv
 from instagrapi import Client
 from instagrapi.exceptions import ChallengeRequired, FeedbackRequired, LoginRequired
 
 from database import Database
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class InstagramBot:
@@ -22,15 +27,62 @@ class InstagramBot:
 
     def _load_config(self, config_path: str) -> dict:
         with open(config_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            config = json.load(f)
+        self._validate_config(config)
+        return config
+
+    def _validate_config(self, config: dict):
+        """Validate config structure and values"""
+        if "reels" not in config or not isinstance(config["reels"], list):
+            raise ValueError("Config must contain 'reels' list")
+
+        if "settings" not in config:
+            raise ValueError("Config must contain 'settings'")
+
+        settings = config["settings"]
+        required_settings = [
+            "check_interval_minutes",
+            "min_delay_seconds",
+            "max_delay_seconds",
+            "max_dms_per_session",
+        ]
+        for setting in required_settings:
+            if setting not in settings:
+                raise ValueError(f"Missing required setting: {setting}")
+            if not isinstance(settings[setting], (int, float)) or settings[setting] < 0:
+                raise ValueError(f"Setting '{setting}' must be a positive number")
+
+        for i, reel in enumerate(config["reels"]):
+            if "url" not in reel:
+                raise ValueError(f"Reel {i + 1} missing 'url'")
+            if "message" not in reel:
+                raise ValueError(f"Reel {i + 1} missing 'message'")
 
     def _log(self, message: str, level: str = "INFO"):
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{timestamp}] [{level}] {message}")
 
+    def _secure_session_file(self):
+        """Set restrictive permissions on session file (Unix only)"""
+        try:
+            if sys.platform != "win32":
+                import stat
+
+                os.chmod(self.session_file, stat.S_IRUSR | stat.S_IWUSR)  # 600
+        except Exception:
+            pass  # Ignore on Windows or if permission change fails
+
     def login(self):
-        username = self.config["username"]
-        password = self.config["password"]
+        # Prefer environment variables, fallback to config
+        username = os.environ.get("INSTAGRAM_USERNAME") or self.config.get("username")
+        password = os.environ.get("INSTAGRAM_PASSWORD") or self.config.get("password")
+
+        if not username or not password:
+            self._log(
+                "Missing credentials. Set INSTAGRAM_USERNAME and INSTAGRAM_PASSWORD environment variables or in config.json",
+                "ERROR",
+            )
+            return False
 
         if self.session_file.exists():
             self._log("Found saved session, attempting to restore...")
@@ -49,6 +101,7 @@ class InstagramBot:
             time.sleep(3)
             self.client.login(username, password)
             self.client.dump_settings(self.session_file)
+            self._secure_session_file()
             self._log(f"Logged in as @{username}")
             return True
         except ChallengeRequired:
