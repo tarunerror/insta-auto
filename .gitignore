@@ -1,0 +1,22 @@
+# Credentials and sensitive data
+config.json
+session.json
+
+# Database
+processed.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

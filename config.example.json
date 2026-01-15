@@ -1,0 +1,22 @@
+{
+  "username": "YOUR_INSTAGRAM_USERNAME",
+  "password": "YOUR_INSTAGRAM_PASSWORD",
+  "reels": [
+    {
+      "url": "https://www.instagram.com/reel/EXAMPLE1/",
+      "keywords": ["free", "info", "send", "want"],
+      "message": "Hey {username}, thanks for commenting! Here's your free guide: [your link here]"
+    },
+    {
+      "url": "https://www.instagram.com/reel/EXAMPLE2/",
+      "keywords": ["interested", "yes", "me"],
+      "message": "Hi {username}! Glad you're interested. Check this out: [your link here]"
+    }
+  ],
+  "settings": {
+    "check_interval_minutes": 3,
+    "min_delay_seconds": 45,
+    "max_delay_seconds": 90,
+    "max_dms_per_session": 20
+  }
+}
