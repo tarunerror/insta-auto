@@ -60,6 +60,7 @@ Open `config.json` and edit:
 | `reels` | List of reels to monitor with their custom DM messages |
 | `keywords` | List of trigger words - comment must contain ANY of these (case-insensitive) |
 | `{username}` | Placeholder that gets replaced with commenter's username |
+| `check_interval_minutes` | How often to check for new comments in continuous mode |
 | `min_delay_seconds` | Minimum wait time between DMs (safety) |
 | `max_delay_seconds` | Maximum wait time between DMs (safety) |
 | `max_dms_per_session` | Stop after sending this many DMs per run |
@@ -74,9 +75,25 @@ Open `config.json` and edit:
 
 ### 3. Run the Bot
 
+**Run once:**
 ```bash
 python bot.py
 ```
+
+**Run continuously (checks every X minutes):**
+```bash
+python bot.py --continuous
+```
+or
+```bash
+python bot.py -c
+```
+
+In continuous mode, the bot will:
+1. Check all your reels for new comments
+2. Send DMs to matching users
+3. Wait for `check_interval_minutes` (default: 3 minutes)
+4. Repeat until you press `Ctrl+C`
 
 ## Example Output
 
