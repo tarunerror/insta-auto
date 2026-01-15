@@ -212,6 +212,18 @@ class InstagramBot:
         except Exception as e:
             self._log(f"Error processing reel: {e}", "ERROR")
 
+    def process_all_reels(self):
+        """Process all reels once"""
+        for reel in self.config["reels"]:
+            keywords = reel.get("keywords", [])
+            self.process_reel(reel["url"], reel["message"], keywords)
+
+            if (
+                self.dms_sent_this_session
+                >= self.config["settings"]["max_dms_per_session"]
+            ):
+                break
+
     def run(self):
         self._log("=" * 50)
         self._log("Instagram Comment-to-DM Automation Bot")
@@ -246,7 +258,67 @@ class InstagramBot:
             stats = self.db.get_stats()
             self._log(f"Total DMs sent all time: {stats['total_dms_sent']}")
 
+    def run_continuous(self):
+        """Run continuously, checking for new comments at intervals"""
+        self._log("=" * 50)
+        self._log("Instagram Comment-to-DM Automation Bot (Continuous Mode)")
+        self._log("=" * 50)
+        self._log("Press Ctrl+C to stop")
+
+        stats = self.db.get_stats()
+        self._log(
+            f"Stats: {stats['total_dms_sent']} total DMs, {stats['dms_sent_today']} today"
+        )
+
+        if not self.login():
+            self._log("Exiting due to login failure", "ERROR")
+            sys.exit(1)
+
+        check_interval = self.config["settings"]["check_interval_minutes"] * 60
+
+        try:
+            while True:
+                self._log("-" * 40)
+                self._log("Checking for new comments...")
+
+                self.dms_sent_this_session = 0  # Reset per cycle
+
+                for reel in self.config["reels"]:
+                    keywords = reel.get("keywords", [])
+                    self.process_reel(reel["url"], reel["message"], keywords)
+
+                stats = self.db.get_stats()
+                self._log(f"Cycle complete. Total DMs sent: {stats['total_dms_sent']}")
+                self._log(
+                    f"Next check in {self.config['settings']['check_interval_minutes']} minutes..."
+                )
+
+                time.sleep(check_interval)
+
+        except FeedbackRequired:
+            self._log("Bot stopped due to Instagram restrictions", "ERROR")
+        except KeyboardInterrupt:
+            self._log("Bot stopped by user")
+        finally:
+            stats = self.db.get_stats()
+            self._log(f"Total DMs sent all time: {stats['total_dms_sent']}")
+
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Instagram Comment-to-DM Bot")
+    parser.add_argument(
+        "--continuous",
+        "-c",
+        action="store_true",
+        help="Run continuously, checking for new comments at intervals",
+    )
+    args = parser.parse_args()
+
     bot = InstagramBot()
-    bot.run()
+
+    if args.continuous:
+        bot.run_continuous()
+    else:
+        bot.run()
