@@ -1,6 +1,7 @@
 # Credentials and sensitive data
 config.json
 session.json
+claude1.md
 
 # Database
 processed.db
