@@ -1,61 +1,71 @@
 # Instagram Comment-to-DM Automation Bot
 
-Automatically send personalized DMs to users who follow you and comment on your specific reels.
+Automatically send personalized DMs to users who follow you and comment on your Instagram Reels. Perfect for content creators who want to deliver free guides, links, or exclusive content to engaged followers.
 
 ## How It Works
 
 ```
-User follows you → Comments with keyword on your reel → Receives automated DM
+User follows you → Comments with keyword on your reel → Receives automated DM + Comment reply
 ```
 
-## Requirements
+## Features
 
-- Python 3.8 or higher
-- Instagram account (Creator or Business)
+| Feature | Description |
+|---------|-------------|
+| **Multi-Reel Monitoring** | Monitor unlimited reels with different messages for each |
+| **Keyword Filtering** | Only respond to comments containing specific trigger words |
+| **Follower Verification** | Only DM users who actually follow you |
+| **Personalized Messages** | Use `{username}` placeholder for personalization |
+| **Comment Replies** | Automatically reply to comments after DMing |
+| **Duplicate Prevention** | Database tracks all interactions - never spam the same user |
+| **Parallel Processing** | Process 100+ reels simultaneously for speed |
+| **Rate Limiting** | Built-in safety features to avoid Instagram blocks |
+| **Session Caching** | Saves login session to avoid repeated authentication |
 
-## Setup
-
-### 1. Install Python Dependencies
+## Quick Start
 
 ```bash
-cd D:\insta-auto
+# 1. Install dependencies
 pip install -r requirements.txt
-```
 
-### 2. Configure Your Credentials (Choose One Method)
-
-**Option A: Environment Variables (Recommended - More Secure)**
-
-Copy `.env.example` to `.env` and edit:
-```bash
+# 2. Set up credentials
 cp .env.example .env
+# Edit .env with your Instagram username/password
+
+# 3. Configure your reels
+cp config.example.json config.json
+# Edit config.json with your reel URLs and messages
+
+# 4. Run the bot
+python bot.py
 ```
 
-Then edit `.env`:
-```
-INSTAGRAM_USERNAME=your_instagram_username
-INSTAGRAM_PASSWORD=your_instagram_password
-```
+> **New to this?** See [SETUP.md](SETUP.md) for a detailed beginner-friendly guide.
 
-**Option B: Config File (Less Secure)**
+## Command-Line Options
 
-Add credentials directly to `config.json`:
+| Command | Description |
+|---------|-------------|
+| `python bot.py` | Run once and exit |
+| `python bot.py -c` | Run continuously (checks every X minutes) |
+| `python bot.py -p` | Parallel mode (fetch all reels at once) |
+| `python bot.py -f` | **Full parallel** (fastest - fetch + DM simultaneously) |
+| `python bot.py -c -f` | Continuous + full parallel (recommended for many reels) |
+
+### Execution Modes Explained
+
+| Mode | Speed | Best For |
+|------|-------|----------|
+| Default | Slow | 1-5 reels, safest option |
+| `-p` (parallel) | Medium | 10-50 reels |
+| `-f` (full-parallel) | Fast | 50+ reels, time-sensitive |
+
+## Configuration
+
+### config.json
+
 ```json
 {
-  "username": "your_instagram_username",
-  "password": "your_instagram_password",
-  ...
-}
-```
-
-### 3. Configure Your Reels
-
-Edit `config.json` with your reels:
-
-```json
-{
-  "username": "your_instagram_username",
-  "password": "your_instagram_password",
   "reels": [
     {
       "url": "https://www.instagram.com/reel/ABC123/",
@@ -72,178 +82,164 @@ Edit `config.json` with your reels:
     "check_interval_minutes": 3,
     "min_delay_seconds": 45,
     "max_delay_seconds": 90,
-    "max_dms_per_session": 20
+    "max_dms_per_session": 20,
+    "max_parallel_reels": 5,
+    "max_parallel_dms": 3,
+    "parallel_dm_delay": 3.0,
+    "comment_replies": [
+      "Hey @{username}, check your DMs!",
+      "@{username} just sent you something special!",
+      "Sent it to your inbox @{username}!"
+    ]
   }
 }
 ```
 
-#### Configuration Options
+### All Settings
 
-| Setting | Description |
-|---------|-------------|
-| `username` | Your Instagram username |
-| `password` | Your Instagram password |
-| `reels` | List of reels to monitor with their custom DM messages |
-| `keywords` | List of trigger words - comment must contain ANY of these (case-insensitive) |
-| `{username}` | Placeholder that gets replaced with commenter's username |
-| `check_interval_minutes` | How often to check for new comments in continuous mode |
-| `min_delay_seconds` | Minimum wait time between DMs (safety) |
-| `max_delay_seconds` | Maximum wait time between DMs (safety) |
-| `max_dms_per_session` | Stop after sending this many DMs per run |
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `check_interval_minutes` | 3 | Minutes between checks in continuous mode |
+| `min_delay_seconds` | 45 | Minimum delay between DMs (sequential mode) |
+| `max_delay_seconds` | 90 | Maximum delay between DMs (sequential mode) |
+| `max_dms_per_session` | 20 | Max DMs per run/cycle |
+| `max_parallel_reels` | 5 | Concurrent reel fetches (parallel modes) |
+| `max_parallel_dms` | 3 | Concurrent DM sends (full-parallel mode) |
+| `parallel_dm_delay` | 3.0 | Seconds between parallel DM batches |
+| `comment_replies` | [] | Random replies posted on user's comment |
 
-#### Keyword Examples
+### Keyword Matching
 
 | Keywords | Matches | Doesn't Match |
 |----------|---------|---------------|
-| `["free", "info"]` | "I want free guide", "send info please" | "hello", "nice video" |
-| `["send", "want", "me"]` | "send me", "I want it" | "great content" |
-| `[]` (empty) | All comments | Nothing |
+| `["free", "info"]` | "I want free guide", "send info" | "hello", "nice video" |
+| `["send", "want"]` | "send me", "I want it" | "great content" |
+| `[]` (empty) | **All comments** | Nothing |
 
-### 4. Run the Bot
-
-**Run once:**
-```bash
-python bot.py
-```
-
-**Run continuously (checks every X minutes):**
-```bash
-python bot.py --continuous
-```
-or
-```bash
-python bot.py -c
-```
-
-In continuous mode, the bot will:
-1. Check all your reels for new comments
-2. Send DMs to matching users
-3. Wait for `check_interval_minutes` (default: 3 minutes)
-4. Repeat until you press `Ctrl+C`
+- **Case-insensitive**: "FREE" matches "free"
+- **Partial match**: "free" matches "freebie"
+- **Any match**: Comment needs ANY ONE keyword
 
 ## Example Output
 
 ```
-[2026-01-15 18:30:00] [INFO] ==================================================
-[2026-01-15 18:30:00] [INFO] Instagram Comment-to-DM Automation Bot
-[2026-01-15 18:30:00] [INFO] ==================================================
-[2026-01-15 18:30:00] [INFO] Stats: 45 total DMs, 12 today
-[2026-01-15 18:30:01] [INFO] Logged in as @your_username (from saved session)
-[2026-01-15 18:30:02] [INFO] Checking reel: https://instagram.com/reel/ABC123/
-[2026-01-15 18:30:03] [INFO] Found 15 comments
-[2026-01-15 18:30:03] [INFO] Filtering for keywords: ['free', 'info']
-[2026-01-15 18:30:04] [INFO] @john_doe follows you - sending DM...
-[2026-01-15 18:30:05] [INFO] Waiting 52.3 seconds...
-[2026-01-15 18:30:57] [INFO] ✓ DM sent to @john_doe
-[2026-01-15 18:30:58] [INFO] @jane_smith does NOT follow you - skipping
-[2026-01-15 18:30:59] [INFO] @bob_user comment has no matching keyword - skipping
-[2026-01-15 18:31:00] [INFO] Reel complete: 5 matched keywords, 3 DMs sent, 2 not following, 5 no keyword, 3 already processed
-[2026-01-15 18:31:00] [INFO] Session complete: 3 DMs sent
-[2026-01-15 18:31:00] [INFO] Total DMs sent all time: 48
+[2026-01-17 10:30:00] [INFO] ==================================================
+[2026-01-17 10:30:00] [INFO] Instagram Comment-to-DM Automation Bot
+[2026-01-17 10:30:00] [INFO] Mode: FULL PARALLEL (fetching + DMs simultaneously)
+[2026-01-17 10:30:00] [INFO] ==================================================
+[2026-01-17 10:30:00] [INFO] Stats: 45 total DMs, 12 today
+[2026-01-17 10:30:01] [INFO] Logged in as @your_username (from saved session)
+[2026-01-17 10:30:01] [INFO] ==================================================
+[2026-01-17 10:30:01] [INFO] [FULL PARALLEL] Processing 25 reels
+[2026-01-17 10:30:01] [INFO] [FULL PARALLEL] Max 3 concurrent DMs, 3.0s delay
+[2026-01-17 10:30:01] [INFO] ==================================================
+[2026-01-17 10:30:01] [INFO] Phase 1: Fetching comments from all reels...
+[2026-01-17 10:30:05] [INFO] Phase 1 complete: 150 comments fetched in 4.2s
+[2026-01-17 10:30:05] [INFO] ----------------------------------------
+[2026-01-17 10:30:05] [INFO] Phase 2: Filtering and collecting DM tasks...
+[2026-01-17 10:30:10] [INFO] Phase 2 complete: 8 DMs queued
+[2026-01-17 10:30:10] [INFO] ----------------------------------------
+[2026-01-17 10:30:10] [INFO] Phase 3: Sending 8 DMs in parallel...
+[2026-01-17 10:30:11] [INFO] [PARALLEL DM] Sending to @user1...
+[2026-01-17 10:30:11] [INFO] [PARALLEL DM] Sending to @user2...
+[2026-01-17 10:30:11] [INFO] [PARALLEL DM] Sending to @user3...
+[2026-01-17 10:30:12] [INFO] [PARALLEL DM] ✓ DM sent to @user1 (1 total)
+[2026-01-17 10:30:12] [INFO] [PARALLEL DM] ✓ DM sent to @user2 (2 total)
+[2026-01-17 10:30:13] [INFO] [PARALLEL DM] ✓ DM sent to @user3 (3 total)
+[2026-01-17 10:30:30] [INFO] ==================================================
+[2026-01-17 10:30:30] [INFO] [FULL PARALLEL] Complete!
+[2026-01-17 10:30:30] [INFO] [FULL PARALLEL] 8 DMs sent, 0 failed in 20.1s
+[2026-01-17 10:30:30] [INFO] [FULL PARALLEL] Total this session: 8
 ```
 
-## Files Overview
+## Project Structure
 
 ```
 insta-auto/
-├── bot.py           # Main automation script
-├── config.json      # Your reels and settings (create from config.example.json)
-├── .env             # Your credentials (create from .env.example)
-├── .env.example     # Template for credentials
-├── config.example.json # Template for config
-├── database.py      # Tracks processed users (prevents duplicate DMs)
-├── requirements.txt # Python dependencies
-├── session.json     # Auto-created: Saves login session
-├── processed.db     # Auto-created: Database of processed users
-└── README.md        # This file
+├── bot.py              # Main automation script
+├── database.py         # SQLite database for tracking users
+├── config.json         # Your configuration (create from example)
+├── config.example.json # Template configuration
+├── .env                # Your credentials (create from example)
+├── .env.example        # Template for credentials
+├── requirements.txt    # Python dependencies
+├── README.md           # This file
+├── SETUP.md            # Beginner-friendly setup guide
+├── session.json        # Auto-created: Login session cache
+└── processed.db        # Auto-created: Database of processed users
 ```
-
-## Security
-
-| Feature | Description |
-|---------|-------------|
-| Environment variables | Credentials stored in `.env` file, not in code |
-| .gitignore protection | Sensitive files excluded from git |
-| Session file permissions | Restricted to owner-only on Unix systems |
-| Input validation | Config validated on startup |
 
 ## Safety Features
 
 | Feature | Purpose |
 |---------|---------|
-| Random delays (45-90 sec) | Mimics human behavior |
+| Random delays (45-90s) | Mimics human behavior |
 | Session limit (20 DMs) | Prevents rate limiting |
+| Parallel rate limiter | Controls concurrent DM speed |
 | Session caching | Avoids repeated logins |
-| Duplicate prevention | Never DMs same person twice per reel |
-| Auto-pause on block | Stops if Instagram restricts actions |
+| Duplicate prevention | Never DMs same user twice per reel |
+| Auto-stop on block | Immediately stops if Instagram restricts |
+| Thread-safe operations | Prevents race conditions in parallel mode |
 
-## Running Multiple Times
+## Security
 
-The bot tracks who has been processed. Run it multiple times per day:
-
-```bash
-# Morning run
-python bot.py
-
-# Afternoon run (processes new comments only)
-python bot.py
-
-# Evening run
-python bot.py
-```
+| Feature | Description |
+|---------|-------------|
+| Environment variables | Credentials in `.env`, not in code |
+| .gitignore protection | Sensitive files excluded from git |
+| Session file permissions | 600 (owner-only) on Unix |
+| Config validation | All settings validated on startup |
 
 ## Troubleshooting
 
 ### "Instagram requires verification"
-- Log into Instagram manually on your browser
-- Complete any security challenges
-- Try running the bot again
+- Log into Instagram manually in your browser
+- Complete any security challenges (CAPTCHA, email verification)
+- Delete `session.json` and try again
 
 ### "Login failed"
-- Double-check username/password in config.json
-- Make sure 2FA is disabled or use an app password
-- Wait a few hours if you've had too many login attempts
+- Double-check username/password
+- Disable 2FA or use an app-specific password
+- Wait a few hours if too many login attempts
 
 ### "Instagram blocked DM action"
 - You've been rate-limited
 - Wait 24-48 hours before running again
-- Reduce `max_dms_per_session` to a lower number
+- Reduce `max_dms_per_session` to 10-15
+- Increase delay settings
 
-### Bot sends DMs to same person multiple times
-- This shouldn't happen - the database prevents it
-- Check if `processed.db` exists in your folder
-- Don't delete `processed.db` unless you want to reset
+### Bot not finding comments
+- Make sure the reel URL is correct (try opening it in browser)
+- Check if the reel has any comments
+- Verify your keywords match the comment text
 
-## Risks
+## Reducing Risk
 
-This bot uses unofficial Instagram automation which violates Instagram's Terms of Service.
+This bot uses unofficial Instagram automation. To minimize account risk:
 
-| Risk | Likelihood |
-|------|------------|
-| Temporary action block | High (if overused) |
-| Account suspension | Medium |
-| Permanent ban | Low-Medium |
+| Setting | Safe Value | Description |
+|---------|------------|-------------|
+| `max_dms_per_session` | 10-20 | Keep low |
+| `min_delay_seconds` | 45+ | Higher is safer |
+| `max_parallel_dms` | 2-3 | Don't go higher |
+| Run frequency | 2-3x/day | Don't run 24/7 |
 
-### Reducing Risk
-- Keep `max_dms_per_session` at 20 or lower
-- Run only 2-3 times per day
-- Use delays of 45+ seconds
-- Don't run 24/7
+## Cloud Deployment
 
-## Cloud Deployment (Optional)
-
-To run this bot 24/7 without keeping your computer on:
-
-### PythonAnywhere (Free Tier)
+### PythonAnywhere (Free)
 1. Create account at pythonanywhere.com
 2. Upload all files
-3. Set up a scheduled task to run `python bot.py` every few hours
+3. Create scheduled task: `python bot.py`
 
-### Railway (Free Tier)
-1. Create account at railway.app
-2. Connect your GitHub repo
-3. Deploy and set up cron job
+### Railway / Render
+1. Connect GitHub repo
+2. Set environment variables
+3. Deploy with cron job
 
 ## License
 
-For personal use only. Use at your own risk.
+For personal use only. Use at your own risk. The developers are not responsible for any account restrictions or bans.
+
+## Support
+
+Having issues? Check [SETUP.md](SETUP.md) for detailed setup instructions or open an issue on GitHub.
