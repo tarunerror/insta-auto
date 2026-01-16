@@ -81,8 +81,17 @@ class InstagramBot:
             raise ValueError("Config must contain 'settings'")
 
         settings = config["settings"]
+
+        # Check for interval setting (either seconds or minutes)
+        if (
+            "check_interval_seconds" not in settings
+            and "check_interval_minutes" not in settings
+        ):
+            raise ValueError(
+                "Missing required setting: check_interval_seconds or check_interval_minutes"
+            )
+
         required_settings = [
-            "check_interval_minutes",
             "min_delay_seconds",
             "max_delay_seconds",
             "max_dms_per_session",
