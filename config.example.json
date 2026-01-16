@@ -17,6 +17,12 @@
     "check_interval_minutes": 3,
     "min_delay_seconds": 45,
     "max_delay_seconds": 90,
-    "max_dms_per_session": 20
+    "max_dms_per_session": 20,
+    "comment_replies": [
+      "Hey @{username}, check your DMs! 📩",
+      "@{username} just sent you something special! 💌",
+      "Sent it to your inbox @{username}! ✨",
+      "@{username} check your messages! 🔥"
+    ]
   }
 }
