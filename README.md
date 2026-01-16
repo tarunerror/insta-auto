@@ -47,7 +47,7 @@ python bot.py
 | Command | Description |
 |---------|-------------|
 | `python bot.py` | Run once and exit |
-| `python bot.py -c` | Run continuously (checks every X minutes) |
+| `python bot.py -c` | Run continuously (checks every X seconds) |
 | `python bot.py -p` | Parallel mode (fetch all reels at once) |
 | `python bot.py -f` | **Full parallel** (fastest - fetch + DM simultaneously) |
 | `python bot.py -c -f` | Continuous + full parallel (recommended for many reels) |
@@ -79,7 +79,7 @@ python bot.py
     }
   ],
   "settings": {
-    "check_interval_minutes": 3,
+    "check_interval_seconds": 10,
     "min_delay_seconds": 45,
     "max_delay_seconds": 90,
     "max_dms_per_session": 20,
@@ -99,7 +99,7 @@ python bot.py
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `check_interval_minutes` | 3 | Minutes between checks in continuous mode |
+| `check_interval_seconds` | 10 | Seconds between checks in continuous mode |
 | `min_delay_seconds` | 45 | Minimum delay between DMs (sequential mode) |
 | `max_delay_seconds` | 90 | Maximum delay between DMs (sequential mode) |
 | `max_dms_per_session` | 20 | Max DMs per run/cycle |
@@ -107,6 +107,8 @@ python bot.py
 | `max_parallel_dms` | 3 | Concurrent DM sends (full-parallel mode) |
 | `parallel_dm_delay` | 3.0 | Seconds between parallel DM batches |
 | `comment_replies` | [] | Random replies posted on user's comment |
+
+> **Note:** You can also use `check_interval_minutes` for minute-based intervals (legacy support).
 
 ### Keyword Matching
 
@@ -150,6 +152,7 @@ python bot.py
 [2026-01-17 10:30:30] [INFO] [FULL PARALLEL] Complete!
 [2026-01-17 10:30:30] [INFO] [FULL PARALLEL] 8 DMs sent, 0 failed in 20.1s
 [2026-01-17 10:30:30] [INFO] [FULL PARALLEL] Total this session: 8
+[2026-01-17 10:30:30] [INFO] Next check in 10 seconds...
 ```
 
 ## Project Structure

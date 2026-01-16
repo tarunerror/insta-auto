@@ -1,6 +1,4 @@
 {
-  "username": "YOUR_INSTAGRAM_USERNAME",
-  "password": "YOUR_INSTAGRAM_PASSWORD",
   "reels": [
     {
       "url": "https://www.instagram.com/reel/EXAMPLE1/",
@@ -14,15 +12,15 @@
     }
   ],
   "settings": {
-    "check_interval_minutes": 3,
+    "check_interval_seconds": 10,
     "min_delay_seconds": 45,
     "max_delay_seconds": 90,
     "max_dms_per_session": 20,
     "comment_replies": [
-      "Hey @{username}, check your DMs! 📩",
-      "@{username} just sent you something special! 💌",
-      "Sent it to your inbox @{username}! ✨",
-      "@{username} check your messages! 🔥"
+      "Hey @{username}, check your DMs!",
+      "@{username} just sent you something special!",
+      "Sent it to your inbox @{username}!",
+      "@{username} check your messages!"
     ]
   }
 }

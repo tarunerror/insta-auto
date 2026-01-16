@@ -75,7 +75,7 @@ sudo apt install python3 python3-pip
 ### Option B: Using Git
 
 ```bash
-git clone <repository-url> insta-auto
+git clone https://github.com/tarunerror/insta-auto.git
 cd insta-auto
 ```
 
@@ -175,7 +175,7 @@ Open `config.json` in a text editor. Here's what each part means:
     }
   ],
   "settings": {
-    "check_interval_minutes": 3,
+    "check_interval_seconds": 10,
     "min_delay_seconds": 45,
     "max_delay_seconds": 90,
     "max_dms_per_session": 20,
@@ -220,7 +220,7 @@ Replace the example reel with your own:
     }
   ],
   "settings": {
-    "check_interval_minutes": 3,
+    "check_interval_seconds": 10,
     "min_delay_seconds": 45,
     "max_delay_seconds": 90,
     "max_dms_per_session": 20,
@@ -249,7 +249,7 @@ Replace the example reel with your own:
 
 | Setting | What It Does | Recommended Value |
 |---------|--------------|-------------------|
-| `check_interval_minutes` | How often to check for new comments (continuous mode) | 3-5 minutes |
+| `check_interval_seconds` | How often to check for new comments (continuous mode) | 10-30 seconds |
 | `min_delay_seconds` | Minimum wait between DMs | 45 seconds |
 | `max_delay_seconds` | Maximum wait between DMs | 90 seconds |
 | `max_dms_per_session` | Stop after this many DMs | 15-20 |
@@ -257,6 +257,8 @@ Replace the example reel with your own:
 | `max_parallel_dms` | How many DMs to send at once | 2-3 |
 | `parallel_dm_delay` | Delay between parallel DMs | 3.0 seconds |
 | `comment_replies` | Random replies to post on comments | Add 3-5 variations |
+
+> **Note:** You can also use `check_interval_minutes` instead if you prefer minute-based intervals.
 
 ---
 
@@ -295,7 +297,7 @@ This will:
 1. Log into Instagram
 2. Check all reels for comments
 3. Send DMs to matching commenters
-4. Wait 3 minutes (configurable)
+4. Wait 10 seconds (configurable via `check_interval_seconds`)
 5. Repeat until you press `Ctrl+C`
 
 ### Fast Mode for Many Reels
@@ -366,6 +368,11 @@ This user's comment didn't contain any of your keywords.
 [2026-01-17 10:31:00] [INFO] Reel complete: 5 matched keywords, 3 DMs sent, 2 not following, 5 no keyword, 3 already processed
 ```
 Summary: 5 comments matched, 3 DMs sent, 2 skipped (not followers), 5 skipped (no keyword), 3 already processed before.
+
+```
+[2026-01-17 10:31:00] [INFO] Next check in 10 seconds...
+```
+In continuous mode, the bot waits before checking again.
 
 ### Log Levels
 
@@ -560,7 +567,7 @@ python bot.py -f
 
 ```bash
 python bot.py -c -f
-# Leave running - checks every 3 minutes
+# Leave running - checks every 10 seconds
 # Press Ctrl+C to stop
 ```
 
@@ -587,7 +594,7 @@ copy config.example.json config.json  # Then edit with your reels
 
 # Run
 python bot.py           # Once
-python bot.py -c        # Continuous
+python bot.py -c        # Continuous (checks every 10 seconds)
 python bot.py -f        # Fast (parallel)
 python bot.py -c -f     # Continuous + Fast (recommended)
 
@@ -595,4 +602,4 @@ python bot.py -c -f     # Continuous + Fast (recommended)
 Ctrl+C                  # Stop the bot
 ```
 
-Happy automating! 🚀
+Happy automating!
