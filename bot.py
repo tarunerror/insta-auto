@@ -167,6 +167,38 @@ class InstagramBot:
             self._log(f"Failed to send DM to @{username}: {e}", "ERROR")
             return False
 
+    def _reply_to_comment(self, media_pk: int, comment_id: str, username: str) -> bool:
+        """Reply to a comment with a random personalized message"""
+        try:
+            comment_replies = self.config["settings"].get("comment_replies", [])
+            if not comment_replies:
+                self._log("No comment_replies configured, skipping reply", "WARN")
+                return False
+
+            # Pick a random reply and personalize it
+            reply_template = random.choice(comment_replies)
+            reply_text = reply_template.replace("{username}", username)
+
+            # Small delay before replying
+            time.sleep(random.uniform(1, 2))
+
+            # Use private API directly to avoid Pydantic validation errors
+            # on clips_metadata.original_sound_info.audio_filter_infos
+            result = self.client.private_request(
+                f"media/{media_pk}/comment/",
+                data={
+                    "comment_text": reply_text,
+                    "replied_to_comment_id": comment_id,
+                },
+            )
+            return result.get("comment") is not None
+        except FeedbackRequired as e:
+            self._log(f"Instagram blocked comment reply: {e}", "WARN")
+            return False
+        except Exception as e:
+            self._log(f"Failed to reply to @{username}'s comment: {e}", "WARN")
+            return False
+
     def _random_delay(self):
         min_delay = self.config["settings"]["min_delay_seconds"]
         max_delay = self.config["settings"]["max_delay_seconds"]
@@ -217,10 +249,12 @@ class InstagramBot:
                     user_id = str(comment.get("user", {}).get("pk", ""))
                     username = comment.get("user", {}).get("username", "")
                     comment_text = comment.get("text", "")
+                    comment_id = str(comment.get("pk", ""))
                 else:
                     user_id = str(comment.user.pk)
                     username = comment.user.username
                     comment_text = comment.text
+                    comment_id = str(comment.pk)
 
                 if not user_id or not username:
                     continue
@@ -232,7 +266,7 @@ class InstagramBot:
                 if not self._comment_matches_keywords(comment_text, keywords):
                     self._log(f"@{username} comment has no matching keyword - skipping")
                     skipped_no_keyword += 1
-                    self.db.mark_processed(user_id, username, shortcode)
+                    self.db.mark_processed(user_id, username, shortcode, comment_id)
                     continue
 
                 new_commenters += 1
@@ -240,7 +274,7 @@ class InstagramBot:
                 if not self._check_follows_you(int(user_id)):
                     self._log(f"@{username} does NOT follow you - skipping")
                     skipped_not_following += 1
-                    self.db.mark_processed(user_id, username, shortcode)
+                    self.db.mark_processed(user_id, username, shortcode, comment_id)
                     continue
 
                 self._log(f"@{username} follows you - sending DM...")
@@ -250,7 +284,14 @@ class InstagramBot:
                     self._log(f"✓ DM sent to @{username}")
                     dms_sent += 1
                     self.dms_sent_this_session += 1
-                    self.db.mark_processed(user_id, username, shortcode)
+                    self.db.mark_processed(user_id, username, shortcode, comment_id)
+
+                    # Reply to the comment after sending DM
+                    if comment_id and self._reply_to_comment(
+                        media_pk, comment_id, username
+                    ):
+                        self._log(f"✓ Replied to @{username}'s comment")
+                        self.db.mark_comment_replied(user_id, shortcode)
                 else:
                     self._log(f"✗ Failed to DM @{username}", "WARN")
 
