@@ -854,7 +854,10 @@ class InstagramBot:
             self._log("Exiting due to login failure", "ERROR")
             sys.exit(1)
 
-        check_interval = self.config["settings"]["check_interval_minutes"] * 60
+        check_interval = self.config["settings"].get(
+            "check_interval_seconds",
+            self.config["settings"].get("check_interval_minutes", 1) * 60,
+        )
 
         try:
             while True:
@@ -874,9 +877,7 @@ class InstagramBot:
 
                 stats = self.db.get_stats()
                 self._log(f"Cycle complete. Total DMs sent: {stats['total_dms_sent']}")
-                self._log(
-                    f"Next check in {self.config['settings']['check_interval_minutes']} minutes..."
-                )
+                self._log(f"Next check in {check_interval} seconds...")
 
                 time.sleep(check_interval)
 
