@@ -179,23 +179,38 @@ class InstagramBot:
         media_pk = self.client.media_pk_from_code(shortcode)
         return media_pk
 
-    def _get_comments_raw(self, media_pk: int, amount: int = 50) -> list:
-        """Get comments using raw API to avoid pydantic validation errors"""
-        try:
-            comments = self.client.media_comments(media_pk, amount=amount)
-            return comments
-        except Exception:
-            # Fallback: use private API directly
+    def _get_comments_raw(
+        self, media_pk: int, amount: int = 50, max_retries: int = 3
+    ) -> list:
+        """Get comments using raw API with retry logic"""
+        for attempt in range(max_retries):
             try:
-                result = self.client.private_request(
-                    f"media/{media_pk}/comments/",
-                    params={"can_support_threading": "true"},
-                )
-                comments_data = result.get("comments", [])
-                return comments_data
-            except Exception as e:
-                self._log(f"Failed to get comments: {e}", "ERROR")
-                return []
+                comments = self.client.media_comments(media_pk, amount=amount)
+                return comments
+            except Exception:
+                # Fallback: use private API directly
+                try:
+                    result = self.client.private_request(
+                        f"media/{media_pk}/comments/",
+                        params={"can_support_threading": "true"},
+                    )
+                    comments_data = result.get("comments", [])
+                    return comments_data
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        wait_time = (attempt + 1) * 2  # 2s, 4s, 6s
+                        self._log(
+                            f"Retry {attempt + 1}/{max_retries} after {wait_time}s: {e}",
+                            "WARN",
+                        )
+                        time.sleep(wait_time)
+                    else:
+                        self._log(
+                            f"Failed to get comments after {max_retries} attempts: {e}",
+                            "ERROR",
+                        )
+                        return []
+        return []
 
     def _check_follows_you(self, user_id: int) -> bool:
         try:
@@ -379,9 +394,13 @@ class InstagramBot:
             shortcode = self._extract_reel_id(reel_url)
             self._log(f"[PARALLEL] Fetching comments from: {reel_url}")
 
-            # Thread-safe API calls with lock
+            # Thread-safe API calls with lock and delay to avoid rate limits
             with self._client_lock:
+                time.sleep(random.uniform(1, 2))  # Small delay between API calls
                 media_pk = self._get_media_pk(shortcode)
+                time.sleep(
+                    random.uniform(0.5, 1)
+                )  # Small delay before fetching comments
                 comments = self._get_comments_raw(media_pk, amount=50)
 
             self._log(f"[PARALLEL] Found {len(comments)} comments in reel {shortcode}")
